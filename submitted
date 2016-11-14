@@ -29,13 +29,14 @@ df_testing <- read.csv(file_dest_testing, na.strings=c("NA",""), header=TRUE)
 colnames_test <- colnames(df_testing)
 
 ### Verify that the column names (excluding classe and problem_id) are identical in the training 
-##and test set.
+and test set.
 all.equal(colnames_train[1:length(colnames_train)-1], colnames_test[1:length(colnames_train)-1])
 ## [1] TRUE
 FEATURES
 
 Having verified that the schema of both the training and testing sets are identical
-##(excluding the final column representing the A-E class), I decided to eliminate both NA columns and other extraneous columns.
+(excluding the final column representing the A-E class), I decided to eliminate both 
+NA columns and other extraneous columns.
 
 ### Count the number of non-NAs in each col.
 nonNAs <- function(x) {
@@ -97,7 +98,11 @@ colnames(df_testing)
 ## [46] "gyros_forearm_z"      "accel_forearm_x"      "accel_forearm_y"     
 ## [49] "accel_forearm_z"      "magnet_forearm_x"     "magnet_forearm_y"    
 ## [52] "magnet_forearm_z"     "problem_id"
-Professor Leek discusses Level 1 (raw data to covariates) and Level 2 (covariates to new covariates) covariate creation strategies. Given that we're already supplied with the raw sensor data, there's no need for Level 1 processing. However, while being careful not to overfit, some Level 2 processing is certainly worth attempting.
+Professor Leek discusses Level 1 (raw data to covariates) and Level 2 
+(covariates to new covariates) covariate creation strategies. Given 
+that we're already supplied with the raw sensor data, there's no need 
+for Level 1 processing. However, while being careful not to overfit, 
+some Level 2 processing is certainly worth attempting.
 
 First, check for covariates that have virtually no variablility.
 
@@ -157,11 +162,17 @@ nsv
 ## magnet_forearm_y         1.247       9.54031   FALSE FALSE
 ## magnet_forearm_z         1.000       8.57711   FALSE FALSE
 ## classe                   1.470       0.02548   FALSE FALSE
-Given that all of the near zero variance variables (nsv) are FALSE, there's no need to eliminate any covariates due to lack of variablility.
+Given that all of the near zero variance variables (nsv) are FALSE, 
+there's no need to eliminate any covariates due to lack of variablility.
 
 ALGORITHM
 
-We were provided with a large training set (19,622 entries) and a small testing set (20 entries). Instead of performing the algorithm on the entire training set, as it would be time consuming and wouldn't allow for an attempt on a testing set, I chose to divide the given training set into four roughly equal sets, each of which was then split into a training set (comprising 60% of the entries) and a testing set (comprising 40% of the entries).
+We were provided with a large training set (19,622 entries) and a small 
+testing set (20 entries). Instead of performing the algorithm on the entire 
+training set, as it would be time consuming and wouldn't allow for an attempt 
+on a testing set, I chose to divide the given training set into four roughly 
+equal sets, each of which was then split into a training set (comprising 60% of the entries) 
+and a testing set (comprising 40% of the entries).
 
 # Divide the given training set into 4 roughly equal sets.
 set.seed(666)
@@ -193,13 +204,19 @@ set.seed(666)
 inTrain <- createDataPartition(y=df_small4$classe, p=0.6, list=FALSE)
 df_small_training4 <- df_small4[inTrain,]
 df_small_testing4 <- df_small4[-inTrain,]
-Based on both the process outlined in Section 5.2 of the aforementioned paper and the concensus in the coursera discussion forums, I chose two different algorithms via the caret package: classification trees (method = rpart) and random forests (method = rf).
+Based on both the process outlined in Section 5.2 of the aforementioned paper
+and the concensus in the coursera discussion forums, I chose two different algorithms 
+via the caret package: classification trees (method = rpart) and random forests (method = rf).
 
 PARAMETERS
 
-I decided to try classification trees “out of the box” and then introduce preprocessing and cross validation.
+I decided to try classification trees “out of the box” and then introduce 
+preprocessing and cross validation.
 
-While I also considered applying “out of the box” random forest models, some of the horror stories contributed to the coursera discussion forums regarding the lengthy processing times for random forest models convinced me to only attempt random forests with cross validation and, possibly, preprocessing.
+While I also considered applying “out of the box” random forest models,
+some of the horror stories contributed to the coursera discussion forums 
+regarding the lengthy processing times for random forest models convinced 
+me to only attempt random forests with cross validation and, possibly, preprocessing.
 
 EVALUATION
 
@@ -289,11 +306,13 @@ print(confusionMatrix(predictions, df_small_testing1$classe), digits=4)
 ## Detection Rate         0.1877   0.0770   0.1469  0.03519   0.1117
 ## Detection Prevalence   0.2494   0.1596   0.4120  0.04844   0.1305
 ## Balanced Accuracy      0.7866   0.6475   0.7605  0.59955   0.7926
-I was very disappointed with the low accuracy rate (0.5584) and hoped for significant improvement by incorporating preprocessing and/or cross validation.
+I was very disappointed with the low accuracy rate (0.5584) and hoped for significant 
+improvement by incorporating preprocessing and/or cross validation.
 
 # Train on training set 1 of 4 with only preprocessing.
 set.seed(666)
-modFit <- train(df_small_training1$classe ~ .,  preProcess=c("center", "scale"), data = df_small_training1, method="rpart")
+modFit <- train(df_small_training1$classe ~ .,  preProcess=c("center", "scale"),
+data = df_small_training1, method="rpart")
 print(modFit, digits=3)
 ## CART 
 ## 
@@ -397,7 +416,10 @@ print(confusionMatrix(predictions, df_small_testing1$classe), digits=4)
 ## Detection Rate         0.1877   0.0770   0.1469  0.03519   0.1117
 ## Detection Prevalence   0.2494   0.1596   0.4120  0.04844   0.1305
 ## Balanced Accuracy      0.7866   0.6475   0.7605  0.59955   0.7926
-The impact of incorporating both preprocessing and cross validation appeared to show some minimal improvement (accuracy rate rose from 0.531 to 0.552 against training sets). However, when run against the corresponding testing set, the accuracy rate was identical (0.5584) for both the “out of the box” and the preprocessing/cross validation methods.
+The impact of incorporating both preprocessing and cross validation appeared 
+to show some minimal improvement (accuracy rate rose from 0.531 to 0.552 against training sets). 
+However, when run against the corresponding testing set, the accuracy rate was identical (0.5584) 
+for both the “out of the box” and the preprocessing/cross validation methods.
 
 Random Forest
 
@@ -527,7 +549,10 @@ print(confusionMatrix(predictions, df_small_testing1$classe), digits=4)
 print(predict(modFit, newdata=df_testing))
 ##  [1] B A A A A E D B A A B C B A E E A B B B
 ## Levels: A B C D E
-Preprocessing actually lowered the accuracy rate from 0.955 to 0.954 against the training set. However, when run against the corresponding set, the accuracy rate rose from 0.9689 to 0.9714 with the addition of preprocessing. Thus I decided to apply both preprocessing and cross validation to the remaining 3 data sets.
+Preprocessing actually lowered the accuracy rate from 0.955 to 0.954 against the training set. 
+However, when run against the corresponding set, the accuracy rate rose from 0.9689 to 0.9714 
+with the addition of preprocessing. Thus I decided to apply both preprocessing and cross validation 
+to the remaining 3 data sets.
 
 # Train on training set 2 of 4 with only cross validation.
 set.seed(666)
