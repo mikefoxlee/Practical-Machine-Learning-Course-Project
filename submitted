@@ -28,12 +28,14 @@ colnames_train <- colnames(df_training)
 df_testing <- read.csv(file_dest_testing, na.strings=c("NA",""), header=TRUE)
 colnames_test <- colnames(df_testing)
 
-### Verify that the column names (excluding classe and problem_id) are identical in the training and test set.
+### Verify that the column names (excluding classe and problem_id) are identical in the training 
+##and test set.
 all.equal(colnames_train[1:length(colnames_train)-1], colnames_test[1:length(colnames_train)-1])
 ## [1] TRUE
 FEATURES
 
-Having verified that the schema of both the training and testing sets are identical (excluding the final column representing the A-E class), I decided to eliminate both NA columns and other extraneous columns.
+Having verified that the schema of both the training and testing sets are identical
+##(excluding the final column representing the A-E class), I decided to eliminate both NA columns and other extraneous columns.
 
 ### Count the number of non-NAs in each col.
 nonNAs <- function(x) {
