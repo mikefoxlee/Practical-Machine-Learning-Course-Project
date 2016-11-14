@@ -1,30 +1,5 @@
 PRACTICAL MACHINE LEARNING COURSE PROJECT
 
-SYNOPSIS
-
-Given both training and test data from the following study:
-
-Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human '13) . Stuttgart, Germany: ACM SIGCHI, 2013.
-
-the goal of this project, as specified in Professor Leek's instructions, is to “predict the manner in which they did the exercise.”
-
-Further, Professor Leek states that this report should describe:
-
-“how you built your model”
-“how you used cross validation”
-“what you think the expected out of sample error is”
-“why you made the choices you did”
-Ultimately, the prediction model is to be run on the test data to predict the outcome of 20 different test cases.
-
-In his second lecture, Professor Leek introduces the “Components of a Predictor” and defines five stages:
-
-Question
-Input Data
-Features
-Algorithm
-Parameters
-Evaluation
-I've decided to proceed along this path.
 
 First, though, I'll load the appropriate packages and set the seed for reproduceable results.
 
@@ -33,43 +8,39 @@ library(caret)
 library(rattle)
 library(rpart.plot)
 library(randomForest)
-QUESTION
 
-In the aforementioned study, six participants participated in a dumbell lifting exercise five different ways. The five ways, as described in the study, were “exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E). Class A corresponds to the specified execution of the exercise, while the other 4 classes correspond to common mistakes.”
-
-By processing data gathered from accelerometers on the belt, forearm, arm, and dumbell of the participants in a machine learning algorithm, the question is can the appropriate activity quality (class A-E) be predicted?
 
 INPUT DATA
 
 The first step is to import the data and to verify that the training data and the test data are identical.
 
-# Download data.
-url_raw_training <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
-file_dest_training <- "pml-training.csv"
+### Download data.
+*url_raw_training <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+*file_dest_training <- "pml-training.csv"
 #download.file(url=url_raw_training, destfile=file_dest_training, method="curl")
-url_raw_testing <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
-file_dest_testing <- "pml-testing.csv"
+*url_raw_testing <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+*file_dest_testing <- "pml-testing.csv"
 #download.file(url=url_raw_testing, destfile=file_dest_testing, method="curl")
 
-# Import the data treating empty values as NA.
+### Import the data treating empty values as NA.
 df_training <- read.csv(file_dest_training, na.strings=c("NA",""), header=TRUE)
 colnames_train <- colnames(df_training)
 df_testing <- read.csv(file_dest_testing, na.strings=c("NA",""), header=TRUE)
 colnames_test <- colnames(df_testing)
 
-# Verify that the column names (excluding classe and problem_id) are identical in the training and test set.
+### Verify that the column names (excluding classe and problem_id) are identical in the training and test set.
 all.equal(colnames_train[1:length(colnames_train)-1], colnames_test[1:length(colnames_train)-1])
 ## [1] TRUE
 FEATURES
 
 Having verified that the schema of both the training and testing sets are identical (excluding the final column representing the A-E class), I decided to eliminate both NA columns and other extraneous columns.
 
-# Count the number of non-NAs in each col.
+### Count the number of non-NAs in each col.
 nonNAs <- function(x) {
     as.vector(apply(x, 2, function(x) length(which(!is.na(x)))))
 }
 
-# Build vector of missing data or NA columns to drop.
+### Build vector of missing data or NA columns to drop.
 colcnts <- nonNAs(df_training)
 drops <- c()
 for (cnt in 1:length(colcnts)) {
@@ -78,14 +49,14 @@ for (cnt in 1:length(colcnts)) {
     }
 }
 
-# Drop NA data and the first 7 columns as they're unnecessary for predicting.
+### Drop NA data and the first 7 columns as they're unnecessary for predicting.
 df_training <- df_training[,!(names(df_training) %in% drops)]
 df_training <- df_training[,8:length(colnames(df_training))]
 
 df_testing <- df_testing[,!(names(df_testing) %in% drops)]
 df_testing <- df_testing[,8:length(colnames(df_testing))]
 
-# Show remaining columns.
+### Show remaining columns.
 colnames(df_training)
 ##  [1] "roll_belt"            "pitch_belt"           "yaw_belt"            
 ##  [4] "total_accel_belt"     "gyros_belt_x"         "gyros_belt_y"        
@@ -265,20 +236,20 @@ print(modFit$finalModel, digits=3)
 ##       * denotes terminal node
 ## 
 ##   1) root 2946 2110 A (0.28 0.19 0.17 0.16 0.18)  
-##     2) roll_belt< 130 2699 1860 A (0.31 0.21 0.19 0.18 0.11)  
-##       4) pitch_forearm< -34 220    0 A (1 0 0 0 0) *
-##       5) pitch_forearm>=-34 2479 1860 A (0.25 0.23 0.21 0.19 0.12)  
-##        10) yaw_belt>=168 138   15 A (0.89 0.072 0 0.036 0) *
-##        11) yaw_belt< 168 2341 1780 B (0.21 0.24 0.22 0.2 0.13)  
-##          22) magnet_dumbbell_z< -83.5 305  134 A (0.56 0.3 0.046 0.069 0.02) *
-##          23) magnet_dumbbell_z>=-83.5 2036 1540 C (0.16 0.23 0.25 0.22 0.14)  
-##            46) roll_dumbbell< 57.7 1209  776 C (0.18 0.19 0.36 0.16 0.11) *
-##            47) roll_dumbbell>=57.7 827  565 D (0.12 0.29 0.081 0.32 0.19)  
-##              94) magnet_belt_y>=590 687  433 D (0.11 0.35 0.07 0.37 0.1)  
-##               188) total_accel_dumbbell>=5.5 474  260 B (0.097 0.45 0.1 0.22 0.13) *
-##               189) total_accel_dumbbell< 5.5 213   62 D (0.14 0.11 0 0.71 0.042) *
-##              95) magnet_belt_y< 590 140   55 E (0.19 0.014 0.14 0.057 0.61) *
-##     3) roll_belt>=130 247    1 E (0.004 0 0 0 1) *
+##   2) roll_belt< 130 2699 1860 A (0.31 0.21 0.19 0.18 0.11)  
+##   4) pitch_forearm< -34 220    0 A (1 0 0 0 0) *
+##   5) pitch_forearm>=-34 2479 1860 A (0.25 0.23 0.21 0.19 0.12)  
+##   10) yaw_belt>=168 138   15 A (0.89 0.072 0 0.036 0) *
+##   11) yaw_belt< 168 2341 1780 B (0.21 0.24 0.22 0.2 0.13)  
+##   22) magnet_dumbbell_z< -83.5 305  134 A (0.56 0.3 0.046 0.069 0.02) *
+##   23) magnet_dumbbell_z>=-83.5 2036 1540 C (0.16 0.23 0.25 0.22 0.14)  
+##   46) roll_dumbbell< 57.7 1209  776 C (0.18 0.19 0.36 0.16 0.11) *
+##   47) roll_dumbbell>=57.7 827  565 D (0.12 0.29 0.081 0.32 0.19)  
+##   94) magnet_belt_y>=590 687  433 D (0.11 0.35 0.07 0.37 0.1)  
+##   188) total_accel_dumbbell>=5.5 474  260 B (0.097 0.45 0.1 0.22 0.13) *
+##   189) total_accel_dumbbell< 5.5 213   62 D (0.14 0.11 0 0.71 0.042) *
+##   95) magnet_belt_y< 590 140   55 E (0.19 0.014 0.14 0.057 0.61) *
+##    3) roll_belt>=130 247    1 E (0.004 0 0 0 1) *
 fancyRpartPlot(modFit$finalModel)
 plot of chunk classification_trees_outofthebox
 
